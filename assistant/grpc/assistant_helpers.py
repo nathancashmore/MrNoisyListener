@@ -15,9 +15,15 @@
 """Helper functions for the Google Assistant API."""
 
 import logging
+import sys
+import json
+import google.auth.transport.grpc
+import google.auth.transport.requests
+import google.oauth2.credentials
 
 from google.assistant.embedded.v1alpha2 import embedded_assistant_pb2
 
+ASSISTANT_API_ENDPOINT = 'embeddedassistant.googleapis.com'
 
 def log_assist_request_without_audio(assist_request):
     """Log AssistRequest fields without audio data."""
@@ -52,3 +58,25 @@ def log_assist_response_without_audio(assist_response):
                               size)
             return
         logging.debug('AssistResponse: %s', resp_copy)
+
+
+def open_channel(credentials):
+    # Load OAuth 2.0 credentials.
+    try:
+        with open(credentials, 'r') as f:
+            credentials = google.oauth2.credentials.Credentials(token=None,
+                                                                **json.load(f))
+            http_request = google.auth.transport.requests.Request()
+            credentials.refresh(http_request)
+    except Exception as e:
+        logging.error('Error loading credentials: %s', e)
+        logging.error('Run google-oauthlib-tool to initialize '
+                      'new OAuth 2.0 credentials.')
+        sys.exit(-1)
+
+    # Create an authorized gRPC channel.
+    grpc_channel = google.auth.transport.grpc.secure_authorized_channel(
+        credentials, http_request, ASSISTANT_API_ENDPOINT)
+    logging.info('Connecting to %s', ASSISTANT_API_ENDPOINT)
+
+    return grpc_channel

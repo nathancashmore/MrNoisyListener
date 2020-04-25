@@ -26,25 +26,25 @@ from tenacity import retry, stop_after_attempt, retry_if_exception
 try:
     from . import (
         assistant_helpers,
+        audio_helpers
     )
 except (SystemError, ImportError):
     import assistant_helpers
+    import audio_helpers
 
 END_OF_UTTERANCE = embedded_assistant_pb2.AssistResponse.END_OF_UTTERANCE
 DIALOG_FOLLOW_ON = embedded_assistant_pb2.DialogStateOut.DIALOG_FOLLOW_ON
 CLOSE_MICROPHONE = embedded_assistant_pb2.DialogStateOut.CLOSE_MICROPHONE
 PLAYING = embedded_assistant_pb2.ScreenOutConfig.PLAYING
-
+DEFAULT_GRPC_DEADLINE = 60 * 3 + 5
 
 class GoogleAssistant(object):
 
-    def __init__(self, language_code, device_model_id, device_id,
-                 conversation_stream,
-                 channel, deadline_sec, device_handler):
-        self.language_code = language_code
+    def __init__(self, device_model_id, device_id, device_handler, credentials):
+        self.language_code = 'en-GB'
         self.device_model_id = device_model_id
         self.device_id = device_id
-        self.conversation_stream = conversation_stream
+        self.conversation_stream = audio_helpers.default_conversation_stream()
 
         # Opaque blob provided in AssistResponse that,
         # when provided in a follow-up AssistRequest,
@@ -56,11 +56,13 @@ class GoogleAssistant(object):
         # Force reset of first conversation.
         self.is_new_conversation = True
 
+        channel = assistant_helpers.open_channel(credentials)
+
         # Create Google Assistant API gRPC client.
         self.assistant = embedded_assistant_pb2_grpc.EmbeddedAssistantStub(
             channel
         )
-        self.deadline = deadline_sec
+        self.deadline = DEFAULT_GRPC_DEADLINE
 
         self.device_handler = device_handler
 
