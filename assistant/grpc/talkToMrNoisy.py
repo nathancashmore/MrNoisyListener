@@ -49,7 +49,6 @@ except (SystemError, ImportError):
     import browser_helpers
     import device_helpers
 
-
 ASSISTANT_API_ENDPOINT = 'embeddedassistant.googleapis.com'
 END_OF_UTTERANCE = embedded_assistant_pb2.AssistResponse.END_OF_UTTERANCE
 DIALOG_FOLLOW_ON = embedded_assistant_pb2.DialogStateOut.DIALOG_FOLLOW_ON
@@ -259,11 +258,11 @@ class SampleAssistant(object):
 @click.option('--input-audio-file', '-i',
               metavar='<input file>',
               help='Path to input audio file. '
-              'If missing, uses audio capture')
+                   'If missing, uses audio capture')
 @click.option('--output-audio-file', '-o',
               metavar='<output file>',
               help='Path to output audio file. '
-              'If missing, uses audio playback')
+                   'If missing, uses audio playback')
 @click.option('--audio-sample-rate',
               default=audio_helpers.DEFAULT_AUDIO_SAMPLE_RATE,
               metavar='<audio sample rate>', show_default=True,
@@ -335,117 +334,47 @@ def main(api_endpoint, credentials, project_id,
     logging.info('Connecting to %s', api_endpoint)
 
     # Configure audio source and sink.
-    audio_device = None
-    if input_audio_file:
-        audio_source = audio_helpers.WaveSource(
-            open(input_audio_file, 'rb'),
-            sample_rate=audio_sample_rate,
-            sample_width=audio_sample_width
-        )
-    else:
-        audio_source = audio_device = (
-            audio_device or audio_helpers.SoundDeviceStream(
-                sample_rate=audio_sample_rate,
-                sample_width=audio_sample_width,
-                block_size=audio_block_size,
-                flush_size=audio_flush_size
-            )
-        )
-    if output_audio_file:
-        audio_sink = audio_helpers.WaveSink(
-            open(output_audio_file, 'wb'),
-            sample_rate=audio_sample_rate,
-            sample_width=audio_sample_width
-        )
-    else:
-        audio_sink = audio_device = (
-            audio_device or audio_helpers.SoundDeviceStream(
-                sample_rate=audio_sample_rate,
-                sample_width=audio_sample_width,
-                block_size=audio_block_size,
-                flush_size=audio_flush_size
-            )
-        )
+    audio_sink = audio_helpers.SoundDeviceStream(
+        sample_rate=16000,
+        sample_width=2,
+        block_size=6400,
+        flush_size=25600
+    )
+
+    audio_source = audio_helpers.SoundDeviceStream(
+        sample_rate=16000,
+        sample_width=2,
+        block_size=6400,
+        flush_size=25600
+    )
+
     # Create conversation stream with the given audio source and sink.
     conversation_stream = audio_helpers.ConversationStream(
         source=audio_source,
         sink=audio_sink,
-        iter_size=audio_iter_size,
-        sample_width=audio_sample_width,
+        iter_size=3200,
+        sample_width=2,
     )
 
-    if not device_id or not device_model_id:
-        try:
-            with open(device_config) as f:
-                device = json.load(f)
-                device_id = device['id']
-                device_model_id = device['model_id']
-                logging.info("Using device model %s and device id %s",
-                             device_model_id,
-                             device_id)
-        except Exception as e:
-            logging.warning('Device config not found: %s' % e)
-            logging.info('Registering device')
-            if not device_model_id:
-                logging.error('Option --device-model-id required '
-                              'when registering a device instance.')
-                sys.exit(-1)
-            if not project_id:
-                logging.error('Option --project-id required '
-                              'when registering a device instance.')
-                sys.exit(-1)
-            device_base_url = (
-                'https://%s/v1alpha2/projects/%s/devices' % (api_endpoint,
-                                                             project_id)
-            )
-            device_id = str(uuid.uuid1())
-            payload = {
-                'id': device_id,
-                'model_id': device_model_id,
-                'client_type': 'SDK_SERVICE'
-            }
-            session = google.auth.transport.requests.AuthorizedSession(
-                credentials
-            )
-            r = session.post(device_base_url, data=json.dumps(payload))
-            if r.status_code != 200:
-                logging.error('Failed to register device: %s', r.text)
-                sys.exit(-1)
-            logging.info('Device registered: %s', device_id)
-            pathlib.Path(os.path.dirname(device_config)).mkdir(exist_ok=True)
-            with open(device_config, 'w') as f:
-                json.dump(payload, f)
+    with open(device_config) as f:
+        device = json.load(f)
+        device_id = device['id']
+        device_model_id = device['model_id']
+        logging.info("Using device model %s and device id %s",
+                     device_model_id,
+                     device_id)
 
     device_handler = device_helpers.DeviceRequestHandler(device_id)
-
-    @device_handler.command('action.devices.commands.OnOff')
-    def onoff(on):
-        if on:
-            logging.info('Turning device on')
-        else:
-            logging.info('Turning device off')
-
-    @device_handler.command('com.example.commands.BlinkLight')
-    def blink(speed, number):
-        logging.info('Blinking device %s times.' % number)
-        delay = 1
-        if speed == "SLOWLY":
-            delay = 2
-        elif speed == "QUICKLY":
-            delay = 0.5
-        for i in range(int(number)):
-            logging.info('Device is blinking.')
-            time.sleep(delay)
 
     with SampleAssistant(lang, device_model_id, device_id,
                          conversation_stream, display,
                          grpc_channel, grpc_deadline,
                          device_handler) as assistant:
-        # If file arguments are supplied:
-        # exit after the first turn of the conversation.
-        if input_audio_file or output_audio_file:
-            assistant.assist()
-            return
+        # # If file arguments are supplied:
+        # # exit after the first turn of the conversation.
+        # if input_audio_file or output_audio_file:
+        #     assistant.assist()
+        #     return
 
         # If no file arguments supplied:
         # keep recording voice requests using the microphone
@@ -454,7 +383,6 @@ def main(api_endpoint, credentials, project_id,
         wait_for_user_trigger = not once
         while True:
             if wait_for_user_trigger:
-
                 click.pause(info='Press Enter to send a new request...')
             continue_conversation = assistant.assist()
             # wait for user trigger if there is no follow-up turn in
