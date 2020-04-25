@@ -86,7 +86,6 @@ def main():
     with conversation_assistant.GoogleAssistant(device_model_id, device_id, device_handler, credentials) as assistant:
         detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5)
         print('Listening for the Hotword Mr Noisy... Press Ctrl+C to exit')
-        snowboydecoder.ding_callback
 
         # main loop
         detector.start(detected_callback=ask_google_callback,
