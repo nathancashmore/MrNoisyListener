@@ -14,7 +14,7 @@ def main():
 
     # Setup configuration
     credentials = os.path.join(click.get_app_dir('google-oauthlib-tool'), 'credentials.json')
-    device_config = os.path.join(click.get_app_dir('googlesamples-assistant'), 'device_config.json')
+    device_config = os.path.join(click.get_app_dir('mr-noisy'), 'device_config.json')
     once = False
 
     with open(device_config) as f:
