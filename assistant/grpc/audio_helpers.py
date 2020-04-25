@@ -224,17 +224,17 @@ class SoundDeviceStream(object):
     def read(self, size):
         """Read bytes from the stream."""
         buf, overflow = self._audio_stream.read(size)
-        if overflow:
-            logging.warning('SoundDeviceStream read overflow (%d, %d)',
-                            size, len(buf))
+        # if overflow:
+        #     logging.warning('SoundDeviceStream read overflow (%d, %d)',
+        #                     size, len(buf))
         return bytes(buf)
 
     def write(self, buf):
         """Write bytes to the stream."""
         underflow = self._audio_stream.write(buf)
-        if underflow:
-            logging.warning('SoundDeviceStream write underflow (size: %d)',
-                            len(buf))
+        # if underflow:
+        #     logging.warning('SoundDeviceStream write underflow (size: %d)',
+        #                     len(buf))
         return len(buf)
 
     def flush(self):
