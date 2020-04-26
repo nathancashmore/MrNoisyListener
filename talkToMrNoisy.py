@@ -23,44 +23,10 @@ def interrupt_callback():
 
 def ask_google_callback():
     global assistant
-    once = True
-
-    # # Setup configuration
-    # credentials = os.path.join(click.get_app_dir('google-oauthlib-tool'), 'credentials.json')
-    # device_config = os.path.join(click.get_app_dir('mr-noisy'), 'device_config.json')
-    # once = True
-    #
-    # with open(device_config) as f:
-    #     device = json.load(f)
-    #     device_id = device['id']
-    #     device_model_id = device['model_id']
-    #     logging.info("Using device model %s and device id %s",
-    #                  device_model_id,
-    #                  device_id)
-    #
-    # device_handler = device_helpers.DeviceRequestHandler(device_id)
-    #
-    # with conversation_assistant.GoogleAssistant(device_model_id, device_id, device_handler, credentials) as assistant:
-
-    # If no file arguments supplied:
-    # keep recording voice requests using the microphone
-    # and playing back assistant response using the speaker.
-    # When the once flag is set, don't wait for a trigger. Otherwise, wait.
-    wait_for_user_trigger = not once
     while True:
-        if wait_for_user_trigger:
-            click.pause(info='Press Enter to send a new request...')
         continue_conversation = assistant.assist()
-        # wait for user trigger if there is no follow-up turn in
-        # the conversation.
-        wait_for_user_trigger = not continue_conversation
-
-        # If we only want one conversation, break.
-        if once and (not continue_conversation):
+        if not continue_conversation:
             break
-
-    logging.info("Finished conversation")
-
 
 @click.command()
 def main():
@@ -84,7 +50,7 @@ def main():
     device_handler = device_helpers.DeviceRequestHandler(device_id)
 
     with conversation_assistant.GoogleAssistant(device_model_id, device_id, device_handler, credentials) as assistant:
-        detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5)
+        detector = snowboydecoder.HotwordDetector(model, sensitivity=0.7, audio_gain=1.5)
         print('Listening for the Hotword Mr Noisy... Press Ctrl+C to exit')
 
         # main loop
