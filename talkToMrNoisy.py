@@ -33,11 +33,10 @@ def main():
     global interrupted
     global assistant
 
-    model = '/home/pi/MrNoisyListener/Mr_Noisy.pmdl'
-
     # Setup configuration
-    credentials = os.path.join(click.get_app_dir('google-oauthlib-tool'), 'credentials.json')
-    device_config = os.path.join(click.get_app_dir('mr-noisy'), 'device_config.json')
+    model = '/home/pi/MrNoisyListener/Mr_Noisy.pmdl'
+    credentials = '/home/pi/.config/google-oauthlib-tool/credentials.json'
+    device_config = '/home/pi/.config/mr-noisy/device_config.json'
 
     with open(device_config) as f:
         device = json.load(f)
