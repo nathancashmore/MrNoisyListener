@@ -83,9 +83,26 @@ def default_audio_source():
     )
 
 
+def default_audio_source_from_wav(input_audio_file):
+    return WaveSource(
+        open(input_audio_file, 'rb'),
+        sample_rate=16000,
+        sample_width=2
+    )
+
+
 def default_conversation_stream():
     return ConversationStream(
         source=default_audio_source(),
+        sink=default_audio_sink(),
+        iter_size=3200,
+        sample_width=2,
+    )
+
+
+def default_conversation_stream_from_wav(input_audio_file):
+    return ConversationStream(
+        source=default_audio_source_from_wav(input_audio_file),
         sink=default_audio_sink(),
         iter_size=3200,
         sample_width=2,

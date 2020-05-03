@@ -40,11 +40,11 @@ DEFAULT_GRPC_DEADLINE = 60 * 3 + 5
 
 class GoogleAssistant(object):
 
-    def __init__(self, device_model_id, device_id, device_handler, credentials):
+    def __init__(self, device_model_id, device_id, device_handler, credentials, input_audio_file):
         self.language_code = 'en-GB'
         self.device_model_id = device_model_id
         self.device_id = device_id
-        self.conversation_stream = audio_helpers.default_conversation_stream()
+        self.conversation_stream = audio_helpers.default_conversation_stream_from_wav(input_audio_file)
 
         # Opaque blob provided in AssistResponse that,
         # when provided in a follow-up AssistRequest,
@@ -179,3 +179,11 @@ class GoogleAssistant(object):
         for data in self.conversation_stream:
             # Subsequent requests need audio data, but not config.
             yield embedded_assistant_pb2.AssistRequest(audio_in=data)
+
+    def switch_to_input_from_mic(self):
+        self.conversation_stream.close()
+        self.conversation_stream = audio_helpers.default_conversation_stream()
+
+    def switch_to_input_from_file(self, input_audio_file):
+        self.conversation_stream.close()
+        self.conversation_stream = audio_helpers.default_conversation_stream_from_wav(input_audio_file)
