@@ -5,10 +5,10 @@ from snowboy import snowboydecoder
 from assistant.grpc import device_helpers, conversation_assistant
 
 interrupted = False
-assistant = object
 
 credentials = '/home/pi/.config/google-oauthlib-tool/credentials.json'
 device_config = '/home/pi/.config/mr-noisy/device_config.json'
+
 
 def signal_handler(signal, frame):
     global interrupted
@@ -38,7 +38,8 @@ def ask_google_callback(filename):
 
     device_handler = device_helpers.DeviceRequestHandler(device_id)
 
-    with conversation_assistant.GoogleAssistant(device_model_id, device_id, device_handler, credentials) as assistant:
+    with conversation_assistant.GoogleAssistant(device_model_id, device_id, device_handler, credentials, filename) \
+            as assistant:
         while True:
             continue_conversation = assistant.assist()
 
@@ -53,7 +54,6 @@ def ask_google_callback(filename):
 @click.command()
 def main():
     global interrupted
-    global assistant
 
     model = '/home/pi/MrNoisyListener/Mr_Noisy.pmdl'
 
