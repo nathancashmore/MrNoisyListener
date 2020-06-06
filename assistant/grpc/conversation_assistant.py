@@ -38,13 +38,14 @@ CLOSE_MICROPHONE = embedded_assistant_pb2.DialogStateOut.CLOSE_MICROPHONE
 PLAYING = embedded_assistant_pb2.ScreenOutConfig.PLAYING
 DEFAULT_GRPC_DEADLINE = 60 * 3 + 5
 
+
 class GoogleAssistant(object):
 
-    def __init__(self, device_model_id, device_id, device_handler, credentials, input_audio_file):
+    def __init__(self, device_model_id, device_id, device_handler, credentials):
         self.language_code = 'en-GB'
         self.device_model_id = device_model_id
         self.device_id = device_id
-        self.conversation_stream = audio_helpers.default_conversation_stream_from_wav(input_audio_file)
+        self.conversation_stream = audio_helpers.default_conversation_stream()
 
         # Opaque blob provided in AssistResponse that,
         # when provided in a follow-up AssistRequest,

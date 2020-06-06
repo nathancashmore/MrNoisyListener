@@ -5,6 +5,7 @@ from snowboy import snowboydecoder
 from assistant.grpc import device_helpers, conversation_assistant
 
 interrupted = False
+google_assistant = object
 
 credentials = '/home/pi/.config/google-oauthlib-tool/credentials.json'
 device_config = '/home/pi/.config/mr-noisy/device_config.json'
@@ -27,8 +28,30 @@ def detected_callback():
 def ask_google_callback(filename):
     global credentials
     global device_config
+    global google_assistant
 
-    print("Question found in: " + filename)
+    print("Switching to input from file : " + filename)
+    google_assistant.switch_to_input_from_file(filename)
+    while True:
+
+        continue_conversation = google_assistant.assist()
+
+        if continue_conversation:
+            google_assistant.switch_to_input_from_mic()
+
+        if not continue_conversation:
+            print("Conversation with google over")
+            break
+
+
+@click.command()
+def main():
+    global interrupted
+    global google_assistant
+
+    model = '/home/pi/MrNoisyListener/Mr_Noisy.pmdl'
+
+    detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5, audio_gain=0.5)
 
     with open(device_config) as f:
         device = json.load(f)
@@ -37,37 +60,23 @@ def ask_google_callback(filename):
         print("Using device model :" + device_model_id + " and device id : " + device_id)
 
     device_handler = device_helpers.DeviceRequestHandler(device_id)
+    print("setup device_handler")
 
-    with conversation_assistant.GoogleAssistant(device_model_id, device_id, device_handler, credentials, filename) \
+    with conversation_assistant.GoogleAssistant(device_model_id, device_id, device_handler, credentials) \
             as assistant:
-        while True:
-            continue_conversation = assistant.assist()
 
-            if continue_conversation:
-                assistant.switch_to_input_from_mic()
+        print("Google Assistant setup complete.... waiting for request")
+        google_assistant = assistant
 
-            if not continue_conversation:
-                print("Conversation with google over")
-                break
+        print('Listening for the Hotword Mr Noisy... Press Ctrl+C to exit')
+        # main loop
+        detector.start(detected_callback=detected_callback,
+                       audio_recorder_callback=ask_google_callback,
+                       interrupt_check=interrupt_callback,
+                       sleep_time=0.03,
+                       silent_count_threshold=2)
 
-
-@click.command()
-def main():
-    global interrupted
-
-    model = '/home/pi/MrNoisyListener/Mr_Noisy.pmdl'
-
-    detector = snowboydecoder.HotwordDetector(model, sensitivity=0.6, audio_gain=1.0)
-    print('Listening for the Hotword Mr Noisy... Press Ctrl+C to exit')
-
-    # main loop
-    detector.start(detected_callback=detected_callback,
-                   audio_recorder_callback=ask_google_callback,
-                   interrupt_check=interrupt_callback,
-                   sleep_time=0.03,
-                   silent_count_threshold=2)
-
-    detector.terminate()
+        detector.terminate()
 
 
 if __name__ == '__main__':

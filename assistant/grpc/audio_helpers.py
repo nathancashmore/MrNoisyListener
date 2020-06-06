@@ -108,6 +108,10 @@ def default_conversation_stream_from_wav(input_audio_file):
         sample_width=2,
     )
 
+
+def reset():
+    sd.default.reset()
+
 class WaveSource(object):
     """Audio source that reads audio data from a WAV file.
 
