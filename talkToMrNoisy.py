@@ -1,11 +1,13 @@
 import json
 import click
 from snowboy import snowboydecoder
+from gpiozero import LED
 
 from assistant.grpc import device_helpers, conversation_assistant
 
 interrupted = False
 google_assistant = object
+led = LED(18)
 
 credentials = '/home/pi/.config/google-oauthlib-tool/credentials.json'
 device_config = '/home/pi/.config/mr-noisy/device_config.json'
@@ -23,6 +25,7 @@ def interrupt_callback():
 
 def detected_callback():
     print('recording audio...')
+    led.on()
 
 
 def ask_google_callback(filename):
@@ -41,6 +44,7 @@ def ask_google_callback(filename):
 
         if not continue_conversation:
             print("Conversation with google over")
+            led.off()
             break
 
 
@@ -49,8 +53,9 @@ def main():
     global interrupted
     global google_assistant
 
+    led.on()
+    
     model = '/home/pi/MrNoisyListener/Mr_Noisy.pmdl'
-
     detector = snowboydecoder.HotwordDetector(model, sensitivity=0.5, audio_gain=0.5)
 
     with open(device_config) as f:
@@ -69,6 +74,8 @@ def main():
         google_assistant = assistant
 
         print('Listening for the Hotword Mr Noisy... Press Ctrl+C to exit')
+        led.off()
+
         # main loop
         detector.start(detected_callback=detected_callback,
                        audio_recorder_callback=ask_google_callback,
