@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
+python /home/pi/snowboy/startup_lights.py &
+
 while :
   do
-	python ./snowboy/singleWord.py ./resources/Mr_Noisy.pmdl
-	aplay ./resources/Welcome.wav &
-	python ./google/pushtotalk_led.py --once
+	python /home/pi/snowboy/singleWord.py /home/pi/resources/Mr_Noisy.pmdl
+	aplay /home/pi/resources/Welcome.wav &
+	python /home/pi/google/pushtotalk_led.py --once
   done
